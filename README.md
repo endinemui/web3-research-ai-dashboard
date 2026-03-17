@@ -22,5 +22,5 @@ Data: CoinGecko API
 
 Development Tools: Cursor (AI Code Editor) — the project was built and optimized using neural networks.
 
-# 💡 Why it Matters
+## 💡 Why it Matters
 In the fast-paced Web3 era, data analysis speed is everything. This dashboard demonstrates how combining AI with traditional APIs allows for the rapid delivery of a functional product that replaces hours of manual research.
