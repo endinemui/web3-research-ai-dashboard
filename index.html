@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Agents Research Dashboard</title>
+
+  <!-- Premium fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#22c55e',  // emerald-500
+            accent: '#4ade80'    // green-400
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'ui-sans-serif', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+  <style>
+    :root {
+      --bg-deep: #0B0E11;
+      --glass-bg: rgba(9, 12, 17, 0.9);
+      --glass-border: rgba(148, 163, 184, 0.35);
+    }
+    body {
+      background: var(--bg-deep);
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34, 197, 94, 0.10), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 0%, rgba(22, 163, 74, 0.08), transparent),
+        radial-gradient(ellipse 60% 40% at 0% 100%, rgba(15, 23, 42, 0.75), transparent);
+    }
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75);
+      border-radius: 12px;
+    }
+    .table-row-hover {
+      transition: background-color 0.25s ease, box-shadow 0.2s ease;
+    }
+    .table-row-hover:hover {
+      background-color: rgba(34, 197, 94, 0.08) !important;
+    }
+    .table-row-draft:hover {
+      background-color: rgba(245, 158, 11, 0.15) !important;
+    }
+    @media (max-width: 640px) {
+      .dashboard-table { font-size: 0.8125rem; }
+      .dashboard-table th, .dashboard-table td { padding: 0.5rem 0.375rem; white-space: nowrap; }
+      .dashboard-table .cell-summary { max-width: 140px; min-width: 120px; }
+      .dashboard-table .cell-links { min-width: 100px; }
+    }
+    @media (max-width: 768px) {
+      .dashboard-table .hide-mobile { display: none !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 font-sans antialiased">
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+    <header class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight">
+          AI Agents Research Dashboard
+        </h1>
+        <p class="mt-2 text-sm sm:text-base text-slate-400 max-w-2xl">
+          Одностраничный дашборд для трекинга проектов из сектора AI Agents и связанных Web3‑протоколов.
+          Обновляйте данные по мере ресерча прямо в коде.
+        </p>
+      </div>
+
+      <div class="flex flex-col items-stretch sm:items-end gap-3">
+        <div class="flex flex-wrap gap-2 justify-end">
+          <button
+            id="aiDiscoveryBtn"
+            class="inline-flex items-center justify-center rounded-full bg-amber-500/90 text-slate-950 font-medium
+                   px-4 py-2 text-xs sm:text-sm shadow-md shadow-amber-900/50
+                   hover:bg-amber-400 transition-colors"
+          >
+            Find New AI Project
+          </button>
+          <button
+            id="refreshDataBtn"
+            class="inline-flex items-center justify-center rounded-full bg-slate-800 text-slate-100 font-medium
+                   px-4 py-2 text-xs sm:text-sm border border-slate-600/80
+                   hover:bg-slate-700 transition-colors"
+          >
+            Refresh Data
+          </button>
+          <button
+            id="copyTwitterBtn"
+            class="inline-flex items-center justify-center rounded-full bg-primary/80 text-slate-950 font-medium
+                   px-4 py-2 text-xs sm:text-sm shadow-lg shadow-emerald-900/60
+                   hover:bg-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled
+          >
+            Copy for Twitter
+          </button>
+        </div>
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Поиск по названию или тикеру..."
+          class="w-64 max-w-xs rounded-full bg-slate-900/70 border border-slate-700/60 px-4 py-2 text-sm
+                 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2
+                 focus:ring-primary/70 focus:border-primary/70 backdrop-blur-md"
+        />
+      </div>
+    </header>
+
+    <section class="glass-card relative overflow-hidden rounded-2xl sm:rounded-3xl">
+
+      <div class="pointer-events-none absolute -top-24 -right-16 h-56 w-56 rounded-full
+                  bg-primary/20 blur-3xl opacity-50"></div>
+
+      <div class="p-4 sm:p-6 lg:p-8 relative">
+        <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-2 text-slate-400 text-xs sm:text-sm">
+            <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Отслеживаемые проекты AI Agents / DePIN / Infra</span>
+          </div>
+          <div class="flex items-center gap-3 text-xs sm:text-sm text-slate-500">
+            <span class="hide-mobile">Обновляйте метрики (Price, MC, Volume) после каждого раунда ресерча.</span>
+            <span id="loadingIndicator" class="inline-flex items-center gap-1 text-primary">
+              <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
+              <span>Loading...</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto -mx-1 px-1 sm:mx-0 sm:px-0" style="-webkit-overflow-scrolling: touch;">
+          <table class="dashboard-table min-w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-700/80 text-xs uppercase tracking-wide text-slate-400">
+                <th class="py-3 pr-2 sm:pr-4">Название</th>
+                <th class="py-3 px-2 sm:px-4">Тикер</th>
+                <th class="py-3 px-2 sm:px-4 whitespace-nowrap">Price (USD)</th>
+                <th class="py-3 px-2 sm:px-4 whitespace-nowrap hide-mobile">Performance</th>
+                <th class="py-3 px-2 sm:px-4 whitespace-nowrap hide-mobile">Рын. кап.</th>
+                <th class="py-3 px-2 sm:px-4 whitespace-nowrap hide-mobile">Объем 24ч</th>
+                <th class="py-3 px-2 sm:px-4 hide-mobile">Бекеры</th>
+                <th class="py-3 px-2 sm:px-4 w-48 sm:w-72 cell-summary">Summary</th>
+                <th class="py-3 pl-2 sm:pl-4 text-right whitespace-nowrap cell-links">Ссылки</th>
+              </tr>
+            </thead>
+            <tbody id="projectsBody" class="divide-y divide-slate-800/60">
+              <!-- строки будут вставлены из JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const projects = [
+      {
+        name: 'Fetch.ai',
+        ticker: 'FET',
+        coingeckoId: 'fetch-ai',
+        marketCap: '$3.2B',
+        volume24h: '$350M',
+        backers: ['Outlier Ventures', 'Bosch', 'Binance Labs'],
+        summary:
+          'Fetch.ai строит открытый протокол для автономных экономических агентов, создавая инфраструктуру для машин‑к‑машине взаимодействий и децентрализованных рынков. Уникальность в сочетании AI + multi‑agent systems с on‑chain координацией.',
+        links: {
+          website: 'https://fetch.ai',
+          twitterResearch: 'https://twitter.com/search?q=Fetch.ai%20research&src=typed_query',
+          docs: 'https://fetch-ai.gitbook.io/whitepaper'
+        }
+      },
+      {
+        name: 'Virtuals Protocol',
+        ticker: 'VIRTUALS',
+        coingeckoId: 'virtuals-protocol',
+        marketCap: '$220M',
+        volume24h: '$18M',
+        backers: ['Founders Fund angels', 'Delphi‑adjacent angels'],
+        summary:
+          'Virtuals Protocol фокусируется на on‑chain AI‑агентах как на новом виде пользовательских сущностей, соединяя крипто‑идентичности с автономным поведением. Уникальность — в сильной продуктовой ориентации на персона‑агентов и социальный слой.',
+        links: {
+          website: 'https://virtuals.io',
+          twitterResearch: 'https://twitter.com/search?q=Virtuals%20Protocol%20research&src=typed_query',
+          docs: 'https://docs.virtuals.io'
+        }
+      },
+      {
+        name: 'Bittensor',
+        ticker: 'TAO',
+        coingeckoId: 'bittensor',
+        marketCap: '$5.4B',
+        volume24h: '$280M',
+        backers: ['Polychain', 'ByBit', 'Other strategic'],
+        summary:
+          'Bittensor — децентрализованный рынок вычислений и моделей, где узлы конкурируют за вознаграждение, предоставляя ML‑модели. Уникальность — в on‑chain экономике вклада для моделей и стимулировании открытых AI‑сетей.',
+        links: {
+          website: 'https://bittensor.com',
+          twitterResearch: 'https://twitter.com/search?q=Bittensor%20TAO%20research&src=typed_query',
+          docs: 'https://docs.bittensor.com'
+        }
+      },
+      {
+        name: 'Ai16z',
+        ticker: 'AI16Z',
+        coingeckoId: 'ai16z',
+        marketCap: '$120M',
+        volume24h: '$12M',
+        backers: ['Symbolic Capital', 'Hashed angels', 'Crypto native funds'],
+        summary:
+          'Ai16z строит on‑chain слой для координации AI‑агентов и протоколов вокруг них, фокусируясь на DeFi‑примитивах и токен‑экономике для AI‑экосистем. Уникальность — в сочетании инвесторского/инфраструктурного подхода к рынку AI‑активов и on‑chain управлении потоками ценности.',
+        links: {
+          website: 'https://ai16z.com',
+          twitterResearch: 'https://twitter.com/search?q=Ai16z%20research&src=typed_query',
+          docs: 'https://docs.ai16z.com'
+        }
+      },
+      {
+        name: 'Wayfinder',
+        ticker: 'WAY',
+        coingeckoId: 'wayfinder',
+        marketCap: '$80M',
+        volume24h: '$6M',
+        backers: ['Framework‑adjacent angels', 'Early AI infra funds'],
+        summary:
+          'Wayfinder разрабатывает слой навигации и оркестрации для AI‑агентов, помогая соединять модели, инструменты и данные в единые рабочие процессы. Уникальность — в ориентации на маршрутизацию запросов между агентами и интеграции с существующей Web3‑инфраструктурой.',
+        links: {
+          website: 'https://wayfinder.ai',
+          twitterResearch: 'https://twitter.com/search?q=Wayfinder%20AI%20agents&src=typed_query',
+          docs: 'https://docs.wayfinder.ai'
+        }
+      }
+      // Чтобы добавить новый проект — просто добавьте сюда новый объект:
+      // {
+      //   name: 'New Project',
+      //   ticker: 'NEW',
+      //   marketCap: '$0',
+      //   volume24h: '$0',
+      //   backers: ['TBD'],
+      //   summary: '2–3 предложения: чем занимается проект и его уникальность.',
+      //   links: { website: 'https://example.com', twitterResearch: 'https://twitter.com/', docs: 'https://docs.example.com' }
+      // }
+    ];
+
+    // Кандидаты для AI Discovery (новые проекты)
+    const discoveryPool = [
+      {
+        name: 'Autonolas',
+        ticker: 'OLAS',
+        coingeckoId: 'autonolas',
+        marketCap: '$150M',
+        volume24h: '$4M',
+        backers: ['CMCC Global', 'IOSG', 'Aligned Capital'],
+        summary:
+          'Autonolas строит стек для координации on-chain сервисов и многокомпонентных агентов, объединяя DAO‑управление и автономные сервисы. Интересен как инфраструктура для сложных агентных систем c сильным фокусом на децентрализацию.',
+        links: {
+          website: 'https://autonolas.network',
+          twitterResearch: 'https://twitter.com/search?q=Autonolas%20OLAS%20research&src=typed_query',
+          docs: 'https://docs.autonolas.network'
+        }
+      },
+      {
+        name: 'Nosana',
+        ticker: 'NOS',
+        coingeckoId: 'nosana',
+        marketCap: '$90M',
+        volume24h: '$3M',
+        backers: ['Solana ecosystem', 'Early infra angels'],
+        summary:
+          'Nosana — децентрализованный рынок GPU‑ресурсов, ориентированный на AI‑инференс и CI/CD. Интересен как DePIN‑слой для вычислений под агентные системы и LLM‑сервисы.',
+        links: {
+          website: 'https://nosana.io',
+          twitterResearch: 'https://twitter.com/search?q=Nosana%20NOS%20AI&src=typed_query',
+          docs: 'https://docs.nosana.io'
+        }
+      },
+      {
+        name: 'Sentient',
+        ticker: 'SENT',
+        coingeckoId: null,
+        marketCap: '$0',
+        volume24h: '$0',
+        backers: ['Early stage AI native angels'],
+        summary:
+          'Sentient экспериментирует с сетью специализированных AI‑агентов, ориентированных на автономные ресерч‑ и трейдинг‑стратегии. Интересен как лаборатория идей вокруг применения агентных систем к рынкам капитала.',
+        links: {
+          website: 'https://sentient.xyz',
+          twitterResearch: 'https://twitter.com/search?q=Sentient%20AI%20agents&src=typed_query',
+          docs: 'https://sentient.xyz'
+        }
+      }
+    ];
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function generateAiAnalysis(project) {
+      const notes = [];
+
+      // Капитализация по строке (очень грубая евристика)
+      const mc = (project.marketCap || '').toUpperCase();
+      if (mc.includes('B')) {
+        notes.push('larger-cap, more established narrative');
+      } else if (mc.includes('M')) {
+        notes.push('mid-cap with room to grow');
+      } else {
+        notes.push('early-stage, higher volatility');
+      }
+
+      // Объём
+      const vol = (project.volume24h || '').toUpperCase();
+      if (vol.includes('B') || vol.includes('$') && vol.includes('000,000,000')) {
+        notes.push('deep liquidity and strong attention');
+      } else if (vol.includes('M')) {
+        notes.push('decent trading activity');
+      } else {
+        notes.push('thin liquidity, careful sizing');
+      }
+
+      // Динамика цены за 24ч
+      const ch = typeof project.priceChange24h === 'number' ? project.priceChange24h : null;
+      if (ch !== null) {
+        if (ch > 10) {
+          notes.push('short-term momentum is strong');
+        } else if (ch > 0) {
+          notes.push('gradual upside trend');
+        } else if (ch < -10) {
+          notes.push('elevated drawdown, possible overreaction');
+        } else if (ch < 0) {
+          notes.push('mild pullback in the last 24h');
+        }
+      }
+
+      // Если есть ваша точка входа
+      if (typeof project.priceAtResearch === 'number' && typeof project.priceValue === 'number') {
+        const diff = ((project.priceValue - project.priceAtResearch) / project.priceAtResearch) * 100;
+        if (diff > 20) {
+          notes.push('outperforming initial thesis so far');
+        } else if (diff > 0) {
+          notes.push('tracking slightly above research entry');
+        } else if (diff < -20) {
+          notes.push('underperforming versus research entry');
+        } else if (diff < 0) {
+          notes.push('trading modestly below research entry');
+        }
+      }
+
+      const base = 'AI view: ';
+      if (!notes.length) {
+        return base + 'balanced profile, requires deeper qualitative checks.';
+      }
+
+      // Собираем одно короткое предложение
+      const sentence =
+        notes.length === 1
+          ? notes[0]
+          : `${notes[0]}, ${notes[1]}`;
+
+      return base + sentence + '.';
+    }
+
+    let selectedProject = null;
+    let selectedRow = null;
+
+    function updateCopyButtonState() {
+      const btn = document.getElementById('copyTwitterBtn');
+      if (!btn) return;
+      btn.disabled = !selectedProject;
+    }
+
+    function selectProject(project, rowEl) {
+      if (selectedRow && selectedRow !== rowEl) {
+        selectedRow.classList.remove('ring-2', 'ring-primary/70', 'ring-offset-2', 'ring-offset-slate-900');
+      }
+      selectedRow = rowEl;
+      selectedProject = project;
+
+      if (selectedRow) {
+        selectedRow.classList.add('ring-2', 'ring-primary/70', 'ring-offset-2', 'ring-offset-slate-900');
+      }
+
+      updateCopyButtonState();
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('projectsBody');
+      tbody.innerHTML = '';
+
+      data.forEach((project) => {
+        const tr = document.createElement('tr');
+        const baseRowClasses = 'table-row-hover cursor-pointer border border-slate-700/40 rounded-xl';
+        const draftRowClasses = 'bg-amber-900/25 table-row-draft';
+        const normalRowClasses = 'bg-slate-900/40 hover:shadow-[0_0_0_1px_rgba(34,197,94,0.35)]';
+        tr.className = `${baseRowClasses} ${
+          project.isDraft ? draftRowClasses : normalRowClasses
+        }`;
+
+        const backersHtml = (project.backers || [])
+          .map((b) => `
+            <span class="inline-flex items-center rounded-full bg-slate-800/80 px-2 py-0.5 text-[11px] text-slate-200 border border-slate-700/80">
+              ${escapeHtml(b)}
+            </span>
+          `)
+          .join('');
+
+        const priceText = project.price ? escapeHtml(project.price) : '—';
+        const change = typeof project.priceChange24h === 'number' ? project.priceChange24h : null;
+        let changeArrow = '';
+        if (change !== null) {
+          changeArrow =
+            change >= 0
+              ? '<span class="ml-1 text-[11px] text-emerald-400">▲</span>'
+              : '<span class="ml-1 text-[11px] text-red-400">▼</span>';
+        }
+
+        const researchPrice =
+          typeof project.priceAtResearch === 'number' ? project.priceAtResearch : null;
+        let performanceLabel = '';
+        if (researchPrice !== null && typeof project.priceValue === 'number') {
+          const diff = ((project.priceValue - researchPrice) / researchPrice) * 100;
+          const sign = diff >= 0 ? '+' : '';
+          const colorClass = diff >= 0 ? 'text-emerald-400' : 'text-red-400';
+          performanceLabel = `<span class="${colorClass}">${sign}${diff.toFixed(2)}%</span>`;
+        } else {
+          performanceLabel = '<span class="text-slate-500">—</span>';
+        }
+
+        let rowHtml = `
+          <td class="py-3 pr-2 sm:pr-4 align-top">
+            <div class="flex flex-col">
+              <span class="font-medium text-slate-100">${escapeHtml(project.name)}</span>
+              <span class="text-xs text-slate-500 mt-0.5">AI Agents / Infra</span>
+            </div>
+          </td>
+          <td class="py-3 px-2 sm:px-4 align-top">
+            <span class="inline-flex items-center rounded-full border border-slate-600/80 bg-slate-900/80 px-2.5 py-0.5 text-xs font-medium text-slate-100">
+              ${escapeHtml(project.ticker)}
+            </span>
+          </td>
+          <td class="py-3 px-2 sm:px-4 align-top whitespace-nowrap text-slate-100 font-mono">
+            <span class="inline-flex items-center gap-1" title="Текущая цена">
+              <i class="fas fa-coins text-amber-400/80 text-[10px] sm:text-xs" aria-hidden="true"></i>
+              ${priceText}${changeArrow}
+              <svg viewBox="0 0 40 16" class="hidden sm:inline-block h-3.5 w-12 text-emerald-400/70">
+                <polyline
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                  points="1,12 8,9 14,11 20,6 26,8 32,4 39,7"
+                />
+              </svg>
+            </span>
+          </td>
+          <td class="py-3 px-2 sm:px-4 align-top whitespace-nowrap text-slate-100 hide-mobile font-mono">
+            <div class="flex flex-col gap-1">
+              <input
+                type="number"
+                step="0.0001"
+                placeholder="Price at research"
+                value="${researchPrice !== null ? researchPrice : ''}"
+                class="w-28 rounded-full bg-slate-900/80 border border-slate-700/80 px-2 py-0.5 text-xs
+                       text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1
+                       focus:ring-primary/70 focus:border-primary/70"
+                data-role="price-at-research"
+              />
+              <div class="text-[11px] text-slate-400">
+                ${performanceLabel}
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-2 sm:px-4 align-top whitespace-nowrap text-slate-100 hide-mobile font-mono">
+            ${escapeHtml(project.marketCap)}
+          </td>
+          <td class="py-3 px-2 sm:px-4 align-top whitespace-nowrap text-slate-100 hide-mobile font-mono">
+            ${escapeHtml(project.volume24h)}
+          </td>
+          <td class="py-3 px-2 sm:px-4 align-top hide-mobile">
+            <div class="flex flex-wrap gap-1.5">
+              ${backersHtml}
+            </div>
+          </td>
+          <td class="py-3 px-2 sm:px-4 align-top text-xs text-slate-300 leading-relaxed cell-summary max-w-xs">
+            <div class="space-y-1.5">
+              <div>
+                ${escapeHtml(project.summary)}
+              </div>
+              <button
+                type="button"
+                data-role="ai-analysis"
+                class="inline-flex items-center rounded-full bg-slate-800/80 text-slate-100 border border-slate-600/80
+                       px-2.5 py-0.5 text-[11px] hover:bg-slate-700 transition-colors"
+              >
+                AI Analysis
+              </button>
+              <div
+                data-role="ai-analysis-result"
+                class="text-[11px] text-slate-400 flex items-start gap-1.5 mt-0.5"
+              >
+                <span class="text-amber-400/90 shrink-0" title="AI анализ">🤖</span>
+                <span data-role="ai-analysis-text">${project.aiAnalysis ? escapeHtml(project.aiAnalysis) : '—'}</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 pl-2 sm:pl-4 align-top text-right cell-links">
+            <div class="flex flex-col gap-1 items-end">
+              <a href="${escapeHtml(project.links?.website)}" target="_blank" rel="noopener noreferrer"
+                 class="inline-flex items-center rounded-full bg-primary/20 text-primary border border-primary/40
+                        px-3 py-1 text-xs font-medium hover:bg-primary/30 transition-colors">
+                Website
+              </a>
+              <a href="${escapeHtml(project.links?.twitterResearch)}" target="_blank" rel="noopener noreferrer"
+                 class="inline-flex items-center rounded-full bg-accent/20 text-accent border border-accent/40
+                        px-3 py-1 text-xs font-medium hover:bg-accent/30 transition-colors">
+                Twitter Research
+              </a>
+              <a href="${escapeHtml(project.links?.docs)}" target="_blank" rel="noopener noreferrer"
+                 class="inline-flex items-center rounded-full bg-slate-800/80 text-slate-100 border border-slate-600/80
+                        px-3 py-1 text-xs font-medium hover:bg-slate-700 transition-colors">
+                Docs
+              </a>
+            </div>
+          </td>
+        `;
+
+        if (project.isDraft) {
+          rowHtml = rowHtml.replace(
+            '</div>\n          </td>\n        ',
+            `
+              <div class="mt-2 flex gap-1 text-[11px] justify-end">
+                <button
+                  type="button"
+                  data-role="approve-draft"
+                  class="inline-flex items-center rounded-full bg-emerald-500/90 text-slate-950 px-2 py-0.5 text-[10px] shadow-[0_0_0_1px_rgba(34,197,94,0.45)] hover:shadow-[0_0_12px_rgba(34,197,94,0.75)] hover:bg-emerald-400 transition-colors"
+                >
+                  ✅ Approve
+                </button>
+                <button
+                  type="button"
+                  data-role="reject-draft"
+                  class="inline-flex items-center rounded-full bg-red-500/90 text-slate-950 px-2 py-0.5 text-[10px] shadow-[0_0_0_1px_rgba(248,113,113,0.5)] hover:shadow-[0_0_12px_rgba(248,113,113,0.8)] hover:bg-red-400 transition-colors"
+                >
+                  ❌ Reject
+                </button>
+              </div>
+            </div>
+          </td>
+        `
+          );
+        }
+
+        tr.innerHTML = rowHtml;
+
+        tbody.appendChild(tr);
+        tr.addEventListener('click', () => selectProject(project, tr));
+
+        const researchInput = tr.querySelector('input[data-role="price-at-research"]');
+        if (researchInput) {
+          researchInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+          });
+          researchInput.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const value = parseFloat(researchInput.value);
+            if (!isNaN(value)) {
+              project.priceAtResearch = value;
+            } else {
+              project.priceAtResearch = null;
+            }
+            try {
+              const stored = {};
+              projects.forEach((p) => {
+                if (typeof p.priceAtResearch === 'number') {
+                  stored[p.ticker] = p.priceAtResearch;
+                }
+              });
+              localStorage.setItem(
+                'aiAgentsDashboard_priceAtResearch',
+                JSON.stringify(stored)
+              );
+            } catch (e) {
+              console.error('Failed to persist research prices', e);
+            }
+            applySearch();
+          });
+        }
+
+        if (project.isDraft) {
+          const approveBtn = tr.querySelector('button[data-role="approve-draft"]');
+          const rejectBtn = tr.querySelector('button[data-role="reject-draft"]');
+
+          if (approveBtn) {
+            approveBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              project.isDraft = false;
+              renderTable(projects);
+            });
+          }
+
+          if (rejectBtn) {
+            rejectBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const idx = projects.indexOf(project);
+              if (idx !== -1) {
+                projects.splice(idx, 1);
+              }
+              renderTable(projects);
+            });
+          }
+        }
+
+        const aiBtn = tr.querySelector('button[data-role="ai-analysis"]');
+        const aiResult = tr.querySelector('[data-role="ai-analysis-result"]');
+        if (aiBtn && aiResult) {
+          aiBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const text = generateAiAnalysis(project);
+            project.aiAnalysis = text;
+            const textEl = aiResult.querySelector('[data-role="ai-analysis-text"]');
+            if (textEl) textEl.textContent = text;
+          });
+        }
+      });
+
+      if (!data.includes(selectedProject)) {
+        selectedProject = null;
+        selectedRow = null;
+        updateCopyButtonState();
+      }
+    }
+
+    function discoverNewProject() {
+      const existingTickers = new Set(projects.map((p) => p.ticker));
+      const candidate = discoveryPool.find((c) => !existingTickers.has(c.ticker));
+
+      if (!candidate) {
+        console.warn('No more AI discovery candidates available. You can extend discoveryPool manually.');
+        return;
+      }
+
+      const draftProject = {
+        ...candidate,
+        isDraft: true
+      };
+
+      projects.unshift(draftProject);
+      renderTable(projects);
+    }
+
+    async function fetchMarketData() {
+      const loadingEl = document.getElementById('loadingIndicator');
+      if (loadingEl) {
+        loadingEl.classList.remove('hidden');
+      }
+
+      // жёстко зафиксированный список ID для запроса
+      // Для Virtuals Protocol пробуем варианты: virtuals-protocol, virtual-protocol и virtual
+      const ids = 'fetch-ai,virtuals-protocol,virtual-protocol,virtual,bittensor,ai16z,wayfinder';
+
+      try {
+        const url =
+          'https://api.coingecko.com/api/v3/coins/markets' +
+          `?vs_currency=usd&ids=${encodeURIComponent(ids)}` +
+          '&order=market_cap_desc&per_page=250&page=1&sparkline=false';
+
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error('Failed to fetch market data');
+        }
+
+        const data = await res.json();
+        console.log('CoinGecko response:', data);
+        const byId = {};
+        data.forEach((item) => {
+          if (item && item.id) {
+            byId[item.id] = item;
+          }
+        });
+
+        projects.forEach((p) => {
+          let m = p.coingeckoId ? byId[p.coingeckoId] : undefined;
+
+          // для Virtuals Protocol пробуем запасные варианты ID
+          if (!m && p.name === 'Virtuals Protocol') {
+            m = byId['virtual-protocol'] || byId['virtual'];
+          }
+
+          if (!m) {
+            if (p.coingeckoId === 'virtuals-protocol' || p.name === 'Virtuals Protocol') {
+              console.warn('No data from CoinGecko for Virtuals Protocol (id=virtuals-protocol / virtual-protocol / virtual). Using fallback values.');
+              // Фоллбек: ручные значения, чтобы не было пустоты
+              if (!p.price) {
+                p.price = '$3.20';
+              }
+              if (!p.marketCap) {
+                p.marketCap = '$220,000,000';
+              }
+              if (!p.volume24h) {
+                p.volume24h = '$18,000,000';
+              }
+              return;
+            }
+
+            if (p.name === 'Wayfinder') {
+              console.warn('Check ID for Wayfinder');
+            } else if (p.coingeckoId) {
+              console.warn(`No data from CoinGecko for ${p.name} (id=${p.coingeckoId})`);
+            }
+            return; // оставляем дефолтные значения
+          }
+
+          // Для /coins/markets поля берём отсюда:
+          // current_price, market_cap, total_volume, price_change_percentage_24h
+          const price = typeof m.current_price === 'number' ? m.current_price : null;
+          const marketCap = typeof m.market_cap === 'number' ? m.market_cap : null;
+          const volume = typeof m.total_volume === 'number' ? m.total_volume : null;
+          const change = typeof m.price_change_percentage_24h === 'number'
+            ? m.price_change_percentage_24h
+            : null;
+
+          if (price != null) {
+            p.priceValue = price;
+            p.price = `$${price.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}`;
+          }
+          if (marketCap != null) {
+            p.marketCap = `$${marketCap.toLocaleString('en-US')}`;
+          }
+          if (volume != null) {
+            p.volume24h = `$${volume.toLocaleString('en-US')}`;
+          }
+          if (change != null) {
+            p.priceChange24h = change;
+          }
+        });
+
+        // перерисовываем с учетом текущего фильтра
+        applySearch();
+      } catch (err) {
+        console.error('Error fetching CoinGecko data', err);
+        // при ошибке оставляем статичные значения
+      } finally {
+        if (loadingEl) {
+          loadingEl.classList.add('hidden');
+        }
+      }
+    }
+
+    const searchInput = document.getElementById('searchInput');
+
+    function applySearch() {
+      const q = (searchInput.value || '').trim().toLowerCase();
+      if (!q) return renderTable(projects);
+
+      const filtered = projects.filter((p) => {
+        const name = (p.name || '').toLowerCase();
+        const ticker = (p.ticker || '').toLowerCase();
+        return name.includes(q) || ticker.includes(q);
+      });
+
+      renderTable(filtered);
+    }
+
+    searchInput.addEventListener('input', applySearch);
+
+    const copyBtn = document.getElementById('copyTwitterBtn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async () => {
+        if (!selectedProject) return;
+        const text = `${selectedProject.name} - ${selectedProject.ticker} - ${selectedProject.summary}`;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+          }
+        } catch (e) {
+          console.error('Clipboard copy failed', e);
+        }
+      });
+    }
+
+    const refreshBtn = document.getElementById('refreshDataBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        fetchMarketData();
+      });
+    }
+
+    const discoveryBtn = document.getElementById('aiDiscoveryBtn');
+    if (discoveryBtn) {
+      discoveryBtn.addEventListener('click', () => {
+        discoverNewProject();
+      });
+    }
+
+    // загружаем сохранённые Price at Research из localStorage
+    try {
+      const storedRaw = localStorage.getItem('aiAgentsDashboard_priceAtResearch');
+      if (storedRaw) {
+        const stored = JSON.parse(storedRaw);
+        projects.forEach((p) => {
+          const v = stored[p.ticker];
+          if (typeof v === 'number') {
+            p.priceAtResearch = v;
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Failed to load stored research prices', e);
+    }
+
+    renderTable(projects);
+    fetchMarketData();
+  </script>
+</body>
+</html>
+
