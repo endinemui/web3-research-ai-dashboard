@@ -3,7 +3,7 @@
 
 A powerful tool for automated discovery, analysis, and monitoring of Web3 projects. Built using the Vibe-coding methodology (high-speed development powered by AI tools).
 
-# 🌟 Key Features
+## 🌟 Key Features
 
 AI Analytics: Automated project potential assessment using Gemini API. Generates concise, multi-sentence summaries for quick evaluation.
 
@@ -13,7 +13,7 @@ Smart Discovery: Automated system to find new projects with a manual moderation 
 
 Responsive UI: A clean, adaptive interface designed for efficient research.
 
-# 🛠 Tech Stack
+## 🛠 Tech Stack
 Core: JavaScript / HTML5 / CSS3
 
 AI/LLM: Google Gemini API
