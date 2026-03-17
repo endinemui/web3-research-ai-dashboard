@@ -5,13 +5,13 @@ A powerful tool for automated discovery, analysis, and monitoring of Web3 projec
 
 # 🌟 Key Features
 
-## AI Analytics: Automated project potential assessment using Gemini API. Generates concise, multi-sentence summaries for quick evaluation.
+AI Analytics: Automated project potential assessment using Gemini API. Generates concise, multi-sentence summaries for quick evaluation.
 
-## Real-time Data: Live cryptocurrency price tracking integrated via CoinGecko API.
+Real-time Data: Live cryptocurrency price tracking integrated via CoinGecko API.
 
-## Smart Discovery: Automated system to find new projects with a manual moderation feature (Add to Favorites).
+Smart Discovery: Automated system to find new projects with a manual moderation feature (Add to Favorites).
 
-## Responsive UI: A clean, adaptive interface designed for efficient research.
+Responsive UI: A clean, adaptive interface designed for efficient research.
 
 # 🛠 Tech Stack
 Core: JavaScript / HTML5 / CSS3
