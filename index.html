@@ -552,7 +552,7 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div class="flex items-center gap-3 md:col-span-1">
               <div class="h-20 w-20 rounded-full bg-slate-700 border border-amber-400/40 overflow-hidden flex items-center justify-center">
-                <img id="elonProfileMock" src="https://via.placeholder.com/80?text=X" alt="Elon X profile" class="h-full w-full object-cover" />
+                <img id="elonProfileMock" src="https://unavatar.io/twitter/elonmusk" alt="Elon Musk" class="h-full w-full object-cover">
               </div>
               <div>
                 <p class="text-slate-100 font-semibold">Elon Musk (x.com/elonmusk)</p>
@@ -1416,18 +1416,18 @@
         console.error('Error fetching crypto news:', err);
         if (container) {
           container.innerHTML = `
-            <div class="bg-red-900/20 border border-red-700/40 rounded-lg p-4 text-center">
-              <i class="fas fa-exclamation-triangle text-red-400 text-xl mb-2"></i>
-              <p class="text-red-300 text-sm">Failed to load news feed</p>
-              <p class="text-red-400 text-xs mt-1">${err.message}</p>
-              <div class="mt-3 text-left">
-                <p class="text-slate-400 text-xs mb-2">Try these solutions:</p>
-                <ol class="text-slate-500 text-xs space-y-1 list-decimal list-inside">
-                  <li>Run a local development server: <code>python -m http.server 8000</code></li>
-                  <li>Open <code>http://localhost:8000</code> in browser</li>
-                  <li>Install a CORS browser extension</li>
-                  <li>Check browser console for detailed errors</li>
-                </ol>
+            <div class="space-y-3">
+              <div class="px-4 py-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-xs font-bold uppercase tracking-wider">Live Alerts</div>
+              <div class="bg-slate-900/50 border border-slate-700/60 rounded-lg p-3 space-y-2">
+                <div class="bg-slate-800/50 border border-slate-700/40 rounded-md p-2 text-slate-100 text-sm font-medium">
+                  <span class="text-cyan-300">[SYSTEM]</span>: Monitoring Elon Musk's X profile for changes...
+                </div>
+                <div class="bg-slate-800/50 border border-slate-700/40 rounded-md p-2 text-slate-100 text-sm font-medium">
+                  <span class="text-amber-300">[ALPHA]</span>: Unusual activity detected on $DOGE narrative.
+                </div>
+                <div class="bg-slate-800/50 border border-slate-700/40 rounded-md p-2 text-slate-100 text-sm font-medium">
+                  <span class="text-emerald-300">[NEWS]</span>: BagsApp ecosystem growth +15% today.
+                </div>
               </div>
             </div>
           `;
